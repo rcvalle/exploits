@@ -1,0 +1,60 @@
+name: build
+
+on:
+  push:
+    branches: main
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v1
+
+      - name: Build
+        run: |
+          touch -a README.md
+          rm README.md
+          bundle install
+          bundle exec jekyll build
+          cp _site/README.md README.md
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+
+      - name: Commit
+        run: |
+          git config --global user.email "rcvalle@users.noreply.github.com"
+          git config --global user.name "Ramon de C Valle"
+          git add -A
+          git commit -m "Auto commit changes" || true
+          git push origin main
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    name: Deploy
+    needs: build
+
+    permissions:
+      id-token: write
+      pages: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
